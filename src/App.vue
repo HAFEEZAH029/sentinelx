@@ -1,73 +1,108 @@
 <script setup lang="ts">
-const metricSlots = ['Active Threats', 'Requests / Sec', 'Blocked Attacks', 'Average Latency']
+import {
+  Activity,
+  BarChart3,
+  Plus,
+} from 'lucide-vue-next'
+
+import ActivityFeed from './components/dashboard/ActivityFeed.vue'
+import DashboardHeader from './components/layout/DashboardHeader.vue'
+import MetricsGrid from './components/metrics/MetricsGrid.vue'
+import { computed } from 'vue'
+import { useDashboardStream } from './composables/useDashboardStream'
+import type { AttackType } from './types/dashboard'
+import ThreatChart from './components/charts/ThreatChart.vue'
+
+
+
+const attackTypes: AttackType[] = [
+  'Malware',
+  'Phishing',
+  'Brute Force',
+  'DDoS',
+  'SQL Injection',
+]
+
 const chartSlots = ['Network Traffic Volume', 'Attack Categories']
+
+const attackBars = computed(() => {
+  const counts = attackTypes.map((type) => {
+    const count = latestEvents.value.filter((event) => event.attackType === type).length
+
+    return {
+      label: type === 'SQL Injection' ? 'SQLi' : type === 'Brute Force' ? 'Brute' : type,
+      count,
+    }
+  })
+
+  const maxCount = Math.max(...counts.map((item) => item.count), 1)
+
+  return counts.map((item) => ({
+    ...item,
+    height: `${Math.max((item.count / maxCount) * 100, 8)}%`,
+  }))
+})
+
+const { chartPoints, latestEvents } = useDashboardStream()
+
+/**const threatPoints = computed(() => {
+  if (!chartPoints.value.length) {
+    return '0,95 78,82 150,90 232,52 314,70 392,28 468,48 540,18'
+  }
+
+  const width = 540
+  const height = 120
+  const maxThreats = Math.max(...chartPoints.value.map((point) => point.threats), 1)
+
+  return chartPoints.value
+    .map((point, index) => {
+      const x =
+        chartPoints.value.length === 1
+          ? 0
+          : (index / (chartPoints.value.length - 1)) * width
+
+      const y = height - (point.threats / maxThreats) * height
+
+      return `${x},${y}`
+    })
+    .join(' ')
+}) **/
+
+const trafficPoints = computed(() => {
+  if (!chartPoints.value.length) {
+    return '0,155 72,112 132,82 192,104 252,48 320,76 382,18 446,40 520,0'
+  }
+
+  const width = 520
+  const height = 170
+  const maxTraffic = Math.max(...chartPoints.value.map((point) => point.traffic), 1)
+
+  return chartPoints.value
+    .map((point, index) => {
+      const x =
+        chartPoints.value.length === 1
+          ? 0
+          : (index / (chartPoints.value.length - 1)) * width
+
+      const y = height - (point.traffic / maxTraffic) * height
+
+      return `${x},${y}`
+    })
+    .join(' ')
+})
+
+
 </script>
 
 <template>
-  <main class="min-h-screen overflow-hidden text-cyan-50">
-    <section class="min-h-screen w-full overflow-hidden border border-cyan-200/10 bg-[#071111]/90 shadow-2xl shadow-black/50 ring-1 ring-white/3">
-      <nav class="flex flex-col gap-4 border-b border-cyan-200/10 bg-[#071111]/95 px-5 py-4 shadow-[0_1.25rem_3rem_rgba(0,0,0,0.28)] sm:flex-row sm:items-center sm:justify-between lg:px-8">
-        <div class="flex flex-wrap items-center gap-4">
-          <h1 class="text-4xl font-black leading-none tracking-normal text-cyan-50 sm:text-5xl">
-            SentinelX
-          </h1>
+  <main class="min-h-screen overflow-hidden bg-[#d9d9d9] text-cyan-50">
+    <section
+      class="mx-auto min-h-screen w-full max-w-464 overflow-hidden border border-cyan-200/10 bg-[#071111]/95 shadow-2xl shadow-black/50 ring-1 ring-white/3"
+    >
+      <DashboardHeader />
 
-          <span class="inline-flex h-8 items-center gap-2 rounded-full border border-emerald-300/10 bg-emerald-300/[0.07] px-3 font-mono text-[0.62rem] font-bold uppercase tracking-[0.22em] text-emerald-200 shadow-[0_0_1.5rem_rgba(52,211,153,0.12)]">
-            <span class="h-2 w-2 rounded-full bg-emerald-300 shadow-[0_0_0.9rem_rgba(52,211,153,0.95)]"></span>
-            Connected
-          </span>
-        </div>
-
-        <div class="flex items-center gap-2 self-start sm:self-auto">
-          <button aria-label="Pause stream" class="shell-icon-button">
-            <span class="font-mono text-[0.7rem]">||</span>
-          </button>
-          <button aria-label="Start stream" class="shell-icon-button">
-            <span class="text-[0.7rem]">▷</span>
-          </button>
-          <button aria-label="Toggle theme" class="shell-icon-button ml-2">
-            <span class="text-base">☾</span>
-          </button>
-        </div>
-      </nav>
-
-      <div class="px-5 py-8 sm:px-8 lg:px-8 lg:py-10">
-        <header class="mb-7 grid gap-6 lg:grid-cols-[1fr_auto] lg:items-end">
-          <div>
-            <h2 class="max-w-full text-4xl font-black leading-tight tracking-normal text-cyan-50 sm:text-5xl">
-              System Core
-            </h2>
-            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-400 sm:text-base">
-              Real-time surveillance and defensive metrics across the perimeter.
-            </p>
-          </div>
-
-          <div class="flex flex-wrap items-center gap-3 lg:justify-end">
-            <button class="shell-secondary-button">
-              <span class="font-mono text-sm">≋</span>
-              Controls
-            </button>
-            <button class="shell-primary-button">
-              <span class="text-base">ϟ</span>
-              Deploy Shield
-            </button>
-          </div>
-        </header>
-
-        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-          <article
-            v-for="slot in metricSlots"
-            :key="slot"
-            class="shell-panel min-h-36 p-6"
-          >
-            <div class="flex items-start justify-between gap-3">
-              <p class="shell-kicker">{{ slot }}</p>
-              <span class="shell-live-dot">Live</span>
-            </div>
-            <div class="mt-9 h-8 w-28 rounded-full border border-cyan-300/10 bg-cyan-300/3"></div>
-            <div class="mt-4 h-3 w-36 rounded-full bg-white/4"></div>
-          </article>
-        </section>
+      <div class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
+        <MetricsGrid />
 
         <section class="mt-5 grid gap-5 lg:grid-cols-2">
           <article
@@ -75,39 +110,78 @@ const chartSlots = ['Network Traffic Volume', 'Attack Categories']
             :key="slot"
             class="shell-panel min-h-72 overflow-hidden"
           >
-            <div class="flex items-center justify-between border-b border-cyan-200/5 bg-white/2.5 px-6 py-5">
-              <p class="shell-section-title">{{ slot }}</p>
-              <span class="font-mono text-[0.62rem] uppercase tracking-[0.22em] text-slate-300/80">Ready</span>
+            <div class="flex items-center justify-between border-b border-cyan-200/5 bg-white/2.5 px-5 py-5 sm:px-6">
+              <p class="shell-section-title inline-flex items-center gap-2">
+                <BarChart3 class="h-4 w-4" aria-hidden="true" />
+                {{ slot }}
+              </p>
+              <span class="font-mono text-[0.62rem] uppercase tracking-[0.22em] text-slate-300/80">
+                {{ slot === 'Network Traffic Volume' ? 'GB/s' : 'Incidents' }}
+              </span>
             </div>
-            <div class="grid h-52 place-items-center px-6">
-              <div class="h-px w-full bg-linear-to-r from-transparent via-cyan-300/20 to-transparent"></div>
+
+            <div class="h-52 px-5 py-5">
+              <svg
+                v-if="slot === 'Network Traffic Volume'"
+                viewBox="0 0 520 170"
+                class="h-full w-full overflow-visible"
+                role="img"
+                aria-label="Network traffic volume trend"
+              >
+                <defs>
+                  <linearGradient id="trafficFill" x1="0" x2="0" y1="0" y2="1">
+                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.54" />
+                    <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.02" />
+                  </linearGradient>
+                </defs>
+                <path :d="`M ${trafficPoints} L 520,170 L 0,170 Z`" fill="url(#trafficFill)" />
+                <polyline :points="trafficPoints" fill="none" stroke="#06dff3" stroke-width="3" />
+              </svg>
+
+              <div v-else class="flex h-full items-end justify-between gap-4 px-1 sm:px-6">
+                <div
+                  v-for="bar in attackBars"
+                  :key="bar.label"
+                  class="flex h-full min-w-0 flex-1 flex-col justify-end gap-3"
+                >
+                  <div
+                    class="rounded-t-md bg-cyan-400 shadow-[0_0_1.8rem_rgba(34,211,238,0.24)]"
+                    :style="{ height: bar.height }"
+                  ></div>
+                  <span class="truncate text-center font-mono text-[0.58rem] text-slate-400">
+                    {{ bar.label }}
+                  </span>
+                </div>
+              </div>
             </div>
           </article>
         </section>
 
         <section class="shell-panel mt-5 min-h-64 overflow-hidden">
-          <div class="flex items-center justify-between border-b border-cyan-200/5 bg-white/2.5 px-6 py-5">
-            <p class="shell-section-title">Threat Activity Profile</p>
+          <div class="flex items-center justify-between border-b border-cyan-200/5 bg-white/2.5 px-5 py-5 sm:px-6">
+            <p class="shell-section-title inline-flex items-center gap-2">
+              <Activity class="h-4 w-4" aria-hidden="true" />
+              Threat Activity Profile
+            </p>
             <span class="shell-live-dot">Live Monitor</span>
           </div>
-          <div class="grid min-h-48 place-items-center px-6">
-            <div class="h-px w-full bg-linear-to-r from-cyan-300/10 via-cyan-300/30 to-cyan-300/10"></div>
+          <div class="min-h-48 px-5 py-5">
+            <p class="mb-5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">
+              Threat activity over time
+            </p>
+            <ThreatChart :points="chartPoints" />
           </div>
         </section>
 
-        <section class="shell-panel mt-5 min-h-80 overflow-hidden">
-          <div class="flex items-center justify-between border-b border-cyan-200/5 bg-white/2.5 px-6 py-6">
-            <h3 class="text-2xl font-black tracking-normal text-cyan-50">Live Activity Feed</h3>
-            <div class="flex gap-2 text-xl text-slate-300">
-              <button aria-label="Refresh feed" class="shell-icon-button">↻</button>
-              <button aria-label="Feed options" class="shell-icon-button">⋮</button>
-            </div>
-          </div>
-          <div class="grid min-h-56 place-items-center px-6">
-            <div class="h-px w-full bg-linear-to-r from-transparent via-slate-400/20 to-transparent"></div>
-          </div>
-        </section>
+        <ActivityFeed />
       </div>
+
+      <button
+        aria-label="Create alert"
+        class="fixed bottom-6 right-6 z-20 grid h-13 w-13 place-items-center rounded-full bg-cyan-400 text-slate-950 shadow-[0_0_2rem_rgba(34,211,238,0.55)] transition hover:scale-105 sm:h-14 sm:w-14"
+      >
+        <Plus class="h-6 w-6" aria-hidden="true" />
+      </button>
     </section>
   </main>
 </template>
