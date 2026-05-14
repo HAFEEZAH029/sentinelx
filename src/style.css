@@ -49,7 +49,7 @@ button:focus-visible {
 
 .shell-panel {
   border: 1px solid rgba(165, 243, 252, 0.08);
-  border-radius: 0.7rem;
+  border-radius: 0.5rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.035), rgba(255, 255, 255, 0.012)),
     rgba(8, 20, 20, 0.78);
@@ -103,11 +103,11 @@ button:focus-visible {
 
 .shell-icon-button {
   display: inline-grid;
-  width: 2.25rem;
-  height: 2.25rem;
+  width: 2.15rem;
+  height: 2.15rem;
   place-items: center;
   border: 1px solid rgba(226, 232, 240, 0.08);
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   background: rgba(255, 255, 255, 0.045);
   color: rgba(226, 232, 240, 0.82);
   transition:
@@ -129,7 +129,7 @@ button:focus-visible {
   align-items: center;
   justify-content: center;
   gap: 0.55rem;
-  border-radius: 0.55rem;
+  border-radius: 0.45rem;
   padding: 0 1.05rem;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   font-size: 0.68rem;
@@ -168,6 +168,94 @@ button:focus-visible {
 
 .shell-primary-button:hover {
   box-shadow: 0 0 2.2rem rgba(34, 211, 238, 0.44);
+}
+
+.activity-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 0.2rem 0.55rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.control-field {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.control-label {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: rgb(34, 211, 238);
+}
+
+.control-chip {
+  min-height: 1.45rem;
+  border: 1px solid transparent;
+  border-radius: 0.28rem;
+  padding: 0 0.48rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.56rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition:
+    border-color 160ms ease,
+    background-color 160ms ease,
+    color 160ms ease;
+}
+
+.control-chip-muted {
+  border-color: rgba(148, 163, 184, 0.08);
+  background: rgba(255, 255, 255, 0.045);
+  color: rgb(148, 163, 184);
+}
+
+.control-chip-active {
+  border-color: rgba(34, 211, 238, 0.3);
+  background: rgba(34, 211, 238, 0.18);
+  color: rgb(207, 250, 254);
+}
+
+.control-select-wrap {
+  position: relative;
+  display: block;
+}
+
+.control-select {
+  width: 100%;
+  min-height: 2rem;
+  appearance: none;
+  border: 1px solid rgba(165, 243, 252, 0.06);
+  border-radius: 0.35rem;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 0 2.1rem 0 0.7rem;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: rgb(226, 232, 240);
+}
+
+.control-select:focus {
+  border-color: rgba(34, 211, 238, 0.35);
+  outline: none;
+}
+
+.control-select option {
+  background: #071111;
+  color: rgb(226, 232, 240);
 }
 
 @media (max-width: 420px) {
