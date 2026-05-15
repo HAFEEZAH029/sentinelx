@@ -21,8 +21,10 @@ export interface DashboardControls {
   attackType: AttackType | 'all'
   timeRange: TimeRange
   chartType: ChartType
+  connectionStatus: ConnectionStatus
   enabledDatasets: Record<ControlDatasetKey, boolean>
   showTooltips: boolean
+  isPaused: boolean
 }
 
 export type ConnectionStatus =

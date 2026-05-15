@@ -1,6 +1,7 @@
 import type {
   AttackType,
   ChartPoint,
+  DatasetKey,
   EventStatus,
   MetricSnapshot,
   Severity,
@@ -15,6 +16,7 @@ const attackTypes: AttackType[] = [
   'Malware',
 ]
 
+const datasets: DatasetKey[] = ['threats', 'alerts']
 const severities: Severity[] = ['critical', 'high', 'medium', 'low']
 
 const statuses: EventStatus[] = ['blocked', 'investigating', 'resolved']
@@ -61,7 +63,7 @@ export const generateThreatEvent = (): ThreatEvent => {
     country: randomItem(countries),
     targetSystem: randomItem(targets),
     status: randomItem(statuses),
-    dataset: 'threats',
+    dataset: randomItem(datasets),
   }
 }
 
