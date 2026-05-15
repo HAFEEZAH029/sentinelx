@@ -108,7 +108,7 @@ const statusClasses: Record<string, string> = {
 
     <div
       v-if="feedItems.length > 0"
-      class="max-h-[32rem] divide-y divide-cyan-200/5 overflow-y-auto md:hidden"
+      class="max-h-128 divide-y divide-cyan-200/5 overflow-y-auto md:hidden"
     >
       <article
         v-for="item in feedItems"
