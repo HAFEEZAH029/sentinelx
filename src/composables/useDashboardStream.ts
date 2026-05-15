@@ -7,11 +7,18 @@ import {
 } from '../services/streaming/dashboardStream'
 import type { Subscription } from 'rxjs'
 import { useDashboardControls } from './useDashboardControls'
+import { isValidThreatEvent } from '../utils/validators'
 
 
 const MAX_EVENTS = 2_000
 const MAX_CHART_POINTS = 3_000
 const { controls } = useDashboardControls()
+const malformedCount = ref(0)
+const hasMalformedData = ref(false)
+
+const shouldAcceptStreamData = () => (
+  !controls.isPaused && controls.connectionStatus === 'connected'
+)
 
 export const useDashboardStream = () => {
   const metrics = ref<MetricSnapshot>({
@@ -31,7 +38,7 @@ export const useDashboardStream = () => {
 
   onMounted(() => {
     subscription = metricsStream$.subscribe((nextMetrics) => {
-      if (controls.isPaused) return
+      if (!shouldAcceptStreamData()) return
 
       metrics.value = nextMetrics
       isLoading.value = false
@@ -39,17 +46,23 @@ export const useDashboardStream = () => {
 
     subscription.add(
       threatEventsStream$.subscribe((event) => {
-      if (controls.isPaused) return
+        if (!shouldAcceptStreamData()) return
 
-      events.value = [event, ...events.value].slice(0, MAX_EVENTS)
+        if (!isValidThreatEvent(event)) {
+          malformedCount.value += 1
+          hasMalformedData.value = true
+          return
+        }
+
+        events.value = [event, ...events.value].slice(0, MAX_EVENTS)
       }),
     )
 
     subscription.add(
       chartPointsStream$.subscribe((point) => {
-      if (controls.isPaused) return
+        if (!shouldAcceptStreamData()) return
 
-      chartPoints.value = [...chartPoints.value, point].slice(-MAX_CHART_POINTS)
+        chartPoints.value = [...chartPoints.value, point].slice(-MAX_CHART_POINTS)
       }),
     )
   })
@@ -63,5 +76,7 @@ export const useDashboardStream = () => {
     latestEvents,
     chartPoints,
     isLoading,
+    malformedCount,
+    hasMalformedData,
   }
 }
