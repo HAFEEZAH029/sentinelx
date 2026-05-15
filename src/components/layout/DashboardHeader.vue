@@ -10,8 +10,11 @@ import {
 import { ref } from 'vue'
 
 import ControlPanel from '../ui/ControlPanel.vue'
+import { useDashboardControls } from '../../composables/useDashboardControls'
 
 const isControlPanelOpen = ref(false)
+const { controls, pauseStream, resumeStream } = useDashboardControls()
+
 </script>
 
 <template>
@@ -32,11 +35,11 @@ const isControlPanelOpen = ref(false)
     </div>
 
     <div class="flex shrink-0 items-center gap-2">
-      <button aria-label="Pause stream" class="shell-icon-button">
+      <button aria-label="Pause stream" :disabled="controls.isPaused" @click="pauseStream" class="shell-icon-button">
         <CirclePause class="h-4 w-4" aria-hidden="true" />
       </button>
       <button aria-label="Start stream" class="shell-icon-button">
-        <CirclePlay class="h-4 w-4" aria-hidden="true" />
+        <CirclePlay class="h-4 w-4" :disabled="!controls.isPaused" @click="resumeStream" aria-hidden="true" />
       </button>
       <button aria-label="Toggle theme" class="shell-icon-button ml-2">
         <Moon class="h-4 w-4" aria-hidden="true" />

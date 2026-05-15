@@ -36,15 +36,12 @@ const chartOption = computed<EChartsCoreOption>(() => {
     }),
   )
 
-  const threatData = visiblePoints.value.map((point) => point.threats)
+  const trafficData = visiblePoints.value.map((point) => point.traffic)
 
   return {
     backgroundColor: 'transparent',
     animation: true,
-    animationDuration: 450,
-    animationEasing: 'cubicOut',
     animationDurationUpdate: 450,
-    animationEasingUpdate: 'cubicOut',
     tooltip: {
       show: controls.showTooltips,
       trigger: 'axis',
@@ -65,9 +62,8 @@ const chartOption = computed<EChartsCoreOption>(() => {
     xAxis: {
       type: 'category',
       data: timestamps,
-      boundaryGap: controls.chartType === 'bar',
+      boundaryGap: false,
       axisLine: {
-        show: true,
         lineStyle: {
           color: 'rgba(148, 163, 184, 0.26)',
         },
@@ -83,7 +79,6 @@ const chartOption = computed<EChartsCoreOption>(() => {
     yAxis: {
       type: 'value',
       axisLine: {
-        show: true,
         lineStyle: {
           color: 'rgba(148, 163, 184, 0.26)',
         },
@@ -92,7 +87,6 @@ const chartOption = computed<EChartsCoreOption>(() => {
         show: false,
       },
       splitLine: {
-        show: true,
         lineStyle: {
           color: 'rgba(148, 163, 184, 0.08)',
         },
@@ -104,18 +98,14 @@ const chartOption = computed<EChartsCoreOption>(() => {
     },
     series: [
       {
-        name: 'Threats',
-        data: threatData,
-        type: controls.chartType === 'area' ? 'line' : controls.chartType,
-        smooth: controls.chartType !== 'bar',
-        showSymbol: controls.chartType !== 'bar',
-        symbolSize: 5,
-        areaStyle:
-          controls.chartType === 'area'
-            ? {
-                color: 'rgba(34, 211, 238, 0.2)',
-              }
-            : undefined,
+        name: 'Traffic',
+        data: trafficData,
+        type: 'line',
+        smooth: true,
+        showSymbol: false,
+        areaStyle: {
+          color: 'rgba(34, 211, 238, 0.18)',
+        },
         itemStyle: {
           color: '#22d3ee',
         },
@@ -123,7 +113,6 @@ const chartOption = computed<EChartsCoreOption>(() => {
           width: 3,
           color: '#22d3ee',
         },
-        barMaxWidth: 22,
       },
     ],
   }
@@ -131,7 +120,6 @@ const chartOption = computed<EChartsCoreOption>(() => {
 
 const renderChart = () => {
   if (!chart) return
-
   chart.setOption(chartOption.value, true)
 }
 
@@ -139,6 +127,7 @@ const ensureChart = async () => {
   await nextTick()
 
   if (!props.isEnabled || !chartElement.value) return
+
   if (chart) {
     renderChart()
     chart.resize()
@@ -151,6 +140,7 @@ const ensureChart = async () => {
   resizeObserver = new ResizeObserver(() => {
     chart?.resize()
   })
+
   resizeObserver.observe(chartElement.value)
 }
 
@@ -187,16 +177,16 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="!isEnabled"
-    class="grid h-56 place-items-center text-center text-sm text-slate-400"
+    class="grid h-52 place-items-center text-center text-sm text-slate-400"
   >
-    Enable the threats dataset to restore this chart.
+    Enable the traffic dataset to restore this chart.
   </div>
 
   <div
     v-else
     ref="chartElement"
-    class="h-56 min-h-56 w-full min-w-0"
+    class="h-52 min-h-52 w-full min-w-0"
     role="img"
-    aria-label="Threat activity profile chart"
+    aria-label="Network traffic volume chart"
   ></div>
 </template>

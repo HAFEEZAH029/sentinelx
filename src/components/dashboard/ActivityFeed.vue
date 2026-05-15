@@ -3,10 +3,12 @@ import { computed } from 'vue'
 import { MoreVertical, RefreshCw } from 'lucide-vue-next'
 import { useDashboardStream } from '../../composables/useDashboardStream'
 import { useDashboardControls } from '../../composables/useDashboardControls'
+import { getTimeRangeStart } from '../../utils/timeRange'
 
 
 const { latestEvents } = useDashboardStream()
 const { controls } = useDashboardControls()
+
 
 const feedItems = computed(() =>
   latestEvents.value
@@ -17,9 +19,12 @@ const feedItems = computed(() =>
       const matchesAttackType =
         controls.attackType === 'all' || event.attackType === controls.attackType
 
+        const rangeStart = getTimeRangeStart(controls.timeRange)
+        const matchesTimeRange = event.timestamp >= rangeStart
+
       const datasetEnabled = controls.enabledDatasets[event.dataset]
 
-      return matchesSeverity && matchesAttackType && datasetEnabled
+      return matchesSeverity && matchesAttackType && datasetEnabled && matchesTimeRange
     })
     .map((event) => ({
       id: event.id,
@@ -125,13 +130,20 @@ const statusClasses: Record<string, string> = {
     </div>
 
     <div
-       v-if="feedItems.length === 0"
-       class="grid min-h-40 place-items-center px-6 py-10 text-center"
+      v-if="feedItems.length === 0"
+        class="grid min-h-44 place-items-center px-6 py-10 text-center"
     >
-    <p class="text-sm font-medium text-slate-400">
-       No activity matches the selected controls.
-    </p>
+      <div>
+        <p class="font-mono text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
+          No Matching Activity
+        </p>
+        <p class="mt-2 max-w-sm text-sm text-slate-400">
+          No events match the current filters. Adjust severity, attack type, time range, or dataset controls.
+        </p>
+      </div>
     </div>
+    <div v-if="feedItems.length > 0" class="hidden overflow-x-auto md:block"></div>
+    <div v-if="feedItems.length > 0" class="divide-y divide-cyan-200/5 md:hidden"></div>
 
   </section>
 </template>

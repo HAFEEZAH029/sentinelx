@@ -4,47 +4,37 @@ import { init } from 'echarts/core'
 import type { ECharts, EChartsCoreOption } from 'echarts/core'
 
 import { useDashboardControls } from '../../composables/useDashboardControls'
-import type { ChartPoint } from '../../types/dashboard'
+import type { ThreatEvent } from '../../types/dashboard'
 
 const props = defineProps<{
-  points: ChartPoint[]
+  events: ThreatEvent[]
   isEnabled: boolean
 }>()
 
 const { controls } = useDashboardControls()
 
 const chartElement = ref<HTMLDivElement | null>(null)
+
 let chart: ECharts | null = null
 let resizeObserver: ResizeObserver | null = null
 
-const fallbackPoints: ChartPoint[] = [
-  { timestamp: Date.now() - 60000, threats: 18, traffic: 420, alerts: 8 },
-  { timestamp: Date.now() - 48000, threats: 31, traffic: 520, alerts: 12 },
-  { timestamp: Date.now() - 36000, threats: 24, traffic: 610, alerts: 10 },
-  { timestamp: Date.now() - 24000, threats: 46, traffic: 780, alerts: 18 },
-  { timestamp: Date.now() - 12000, threats: 38, traffic: 690, alerts: 14 },
-  { timestamp: Date.now(), threats: 55, traffic: 880, alerts: 22 },
-]
-
-const visiblePoints = computed(() => (props.points.length ? props.points : fallbackPoints))
-
 const chartOption = computed<EChartsCoreOption>(() => {
-  const timestamps = visiblePoints.value.map((point) =>
-    new Date(point.timestamp).toLocaleTimeString([], {
-      minute: '2-digit',
-      second: '2-digit',
-    }),
-  )
+  const categories = [
+    'Malware',
+    'Phishing',
+    'Brute Force',
+    'DDoS',
+    'SQL Injection',
+  ]
 
-  const threatData = visiblePoints.value.map((point) => point.threats)
+  const counts = categories.map(
+    (category) =>
+      props.events.filter((event) => event.attackType === category).length,
+  )
 
   return {
     backgroundColor: 'transparent',
-    animation: true,
-    animationDuration: 450,
-    animationEasing: 'cubicOut',
-    animationDurationUpdate: 450,
-    animationEasingUpdate: 'cubicOut',
+
     tooltip: {
       show: controls.showTooltips,
       trigger: 'axis',
@@ -55,6 +45,7 @@ const chartOption = computed<EChartsCoreOption>(() => {
         fontSize: 11,
       },
     },
+
     grid: {
       left: 18,
       right: 16,
@@ -62,12 +53,11 @@ const chartOption = computed<EChartsCoreOption>(() => {
       bottom: 28,
       containLabel: true,
     },
+
     xAxis: {
       type: 'category',
-      data: timestamps,
-      boundaryGap: controls.chartType === 'bar',
+      data: ['Malware', 'Phishing', 'Brute', 'DDoS', 'SQLi'],
       axisLine: {
-        show: true,
         lineStyle: {
           color: 'rgba(148, 163, 184, 0.26)',
         },
@@ -80,19 +70,16 @@ const chartOption = computed<EChartsCoreOption>(() => {
         fontSize: 10,
       },
     },
+
     yAxis: {
       type: 'value',
       axisLine: {
-        show: true,
-        lineStyle: {
-          color: 'rgba(148, 163, 184, 0.26)',
-        },
+        show: false,
       },
       axisTick: {
         show: false,
       },
       splitLine: {
-        show: true,
         lineStyle: {
           color: 'rgba(148, 163, 184, 0.08)',
         },
@@ -102,28 +89,24 @@ const chartOption = computed<EChartsCoreOption>(() => {
         fontSize: 10,
       },
     },
+
     series: [
       {
-        name: 'Threats',
-        data: threatData,
-        type: controls.chartType === 'area' ? 'line' : controls.chartType,
-        smooth: controls.chartType !== 'bar',
-        showSymbol: controls.chartType !== 'bar',
-        symbolSize: 5,
-        areaStyle:
-          controls.chartType === 'area'
-            ? {
-                color: 'rgba(34, 211, 238, 0.2)',
-              }
-            : undefined,
+        data: counts,
+        type: 'bar',
+
         itemStyle: {
           color: '#22d3ee',
+          borderRadius: [6, 6, 0, 0],
         },
-        lineStyle: {
-          width: 3,
-          color: '#22d3ee',
+
+        emphasis: {
+          itemStyle: {
+            color: '#67e8f9',
+          },
         },
-        barMaxWidth: 22,
+
+        barMaxWidth: 28,
       },
     ],
   }
@@ -131,7 +114,6 @@ const chartOption = computed<EChartsCoreOption>(() => {
 
 const renderChart = () => {
   if (!chart) return
-
   chart.setOption(chartOption.value, true)
 }
 
@@ -139,6 +121,7 @@ const ensureChart = async () => {
   await nextTick()
 
   if (!props.isEnabled || !chartElement.value) return
+
   if (chart) {
     renderChart()
     chart.resize()
@@ -151,6 +134,7 @@ const ensureChart = async () => {
   resizeObserver = new ResizeObserver(() => {
     chart?.resize()
   })
+
   resizeObserver.observe(chartElement.value)
 }
 
@@ -187,7 +171,7 @@ onBeforeUnmount(() => {
 <template>
   <div
     v-if="!isEnabled"
-    class="grid h-56 place-items-center text-center text-sm text-slate-400"
+    class="grid h-52 place-items-center text-center text-sm text-slate-400"
   >
     Enable the threats dataset to restore this chart.
   </div>
@@ -195,8 +179,8 @@ onBeforeUnmount(() => {
   <div
     v-else
     ref="chartElement"
-    class="h-56 min-h-56 w-full min-w-0"
+    class="h-52 min-h-52 w-full min-w-0"
     role="img"
-    aria-label="Threat activity profile chart"
+    aria-label="Attack categories chart"
   ></div>
 </template>

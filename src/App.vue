@@ -2,30 +2,37 @@
 import {
   Activity,
   BarChart3,
-  Plus,
 } from 'lucide-vue-next'
 
 import ActivityFeed from './components/dashboard/ActivityFeed.vue'
 import DashboardHeader from './components/layout/DashboardHeader.vue'
 import MetricsGrid from './components/metrics/MetricsGrid.vue'
-import { computed } from 'vue'
 import { useDashboardStream } from './composables/useDashboardStream'
-import type { AttackType } from './types/dashboard'
 import ThreatChart from './components/charts/ThreatChart.vue'
+import { useDashboardControls } from './composables/useDashboardControls'
+import TrafficChart from './components/charts/TrafficChart.vue'
+import AttackCategoriesChart from './components/charts/AttackCategoriesChart.vue'
+import PauseOverlay from './components/feedback/PauseOverlay.vue'
+import { getTimeRangeStart } from './utils/timeRange'
+import { computed } from 'vue'
+import LoadingSkeleton from './components/feedback/LoadingSkeleton.vue'
+import ConnectionOverlay from './components/feedback/ConnectionOverlay.vue'
 
 
 
-const attackTypes: AttackType[] = [
+/**const attackTypes: AttackType[] = [
   'Malware',
   'Phishing',
   'Brute Force',
   'DDoS',
   'SQL Injection',
-]
+]**/
+
+const { controls } = useDashboardControls()
 
 const chartSlots = ['Network Traffic Volume', 'Attack Categories']
 
-const attackBars = computed(() => {
+/**const attackBars = computed(() => {
   const counts = attackTypes.map((type) => {
     const count = latestEvents.value.filter((event) => event.attackType === type).length
 
@@ -41,9 +48,15 @@ const attackBars = computed(() => {
     ...item,
     height: `${Math.max((item.count / maxCount) * 100, 8)}%`,
   }))
-})
+}) **/
 
-const { chartPoints, latestEvents } = useDashboardStream()
+const { chartPoints, latestEvents, isLoading } = useDashboardStream()
+
+const visibleChartPoints = computed(() => {
+  const rangeStart = getTimeRangeStart(controls.timeRange)
+
+  return chartPoints.value.filter((point) => point.timestamp >= rangeStart)
+})
 
 /**const threatPoints = computed(() => {
   if (!chartPoints.value.length) {
@@ -68,7 +81,7 @@ const { chartPoints, latestEvents } = useDashboardStream()
     .join(' ')
 }) **/
 
-const trafficPoints = computed(() => {
+/**const trafficPoints = computed(() => {
   if (!chartPoints.value.length) {
     return '0,155 72,112 132,82 192,104 252,48 320,76 382,18 446,40 520,0'
   }
@@ -89,17 +102,27 @@ const trafficPoints = computed(() => {
       return `${x},${y}`
     })
     .join(' ')
-})
+}) **/
 
 
 </script>
 
 <template>
+  <ConnectionOverlay v-if="controls.connectionStatus === 'reconnecting'" />
   <main class="min-h-screen overflow-hidden bg-[#d9d9d9] text-cyan-50">
     <section
       class="mx-auto min-h-screen w-full max-w-464 overflow-hidden border border-cyan-200/10 bg-[#071111]/95 shadow-2xl shadow-black/50 ring-1 ring-white/3"
     >
       <DashboardHeader />
+
+      <div v-if="isLoading" class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
+        <LoadingSkeleton />
+      </div>
+
+     <div
+      v-else
+      class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10"
+     >
 
       <div class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
         <MetricsGrid />
@@ -121,38 +144,17 @@ const trafficPoints = computed(() => {
             </div>
 
             <div class="h-52 px-5 py-5">
-              <svg
+              <TrafficChart
                 v-if="slot === 'Network Traffic Volume'"
-                viewBox="0 0 520 170"
-                class="h-full w-full overflow-visible"
-                role="img"
-                aria-label="Network traffic volume trend"
-              >
-                <defs>
-                  <linearGradient id="trafficFill" x1="0" x2="0" y1="0" y2="1">
-                    <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.54" />
-                    <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.02" />
-                  </linearGradient>
-                </defs>
-                <path :d="`M ${trafficPoints} L 520,170 L 0,170 Z`" fill="url(#trafficFill)" />
-                <polyline :points="trafficPoints" fill="none" stroke="#06dff3" stroke-width="3" />
-              </svg>
+                :points="visibleChartPoints"
+                :is-enabled="controls.enabledDatasets.traffic"
+              />
 
-              <div v-else class="flex h-full items-end justify-between gap-4 px-1 sm:px-6">
-                <div
-                  v-for="bar in attackBars"
-                  :key="bar.label"
-                  class="flex h-full min-w-0 flex-1 flex-col justify-end gap-3"
-                >
-                  <div
-                    class="rounded-t-md bg-cyan-400 shadow-[0_0_1.8rem_rgba(34,211,238,0.24)]"
-                    :style="{ height: bar.height }"
-                  ></div>
-                  <span class="truncate text-center font-mono text-[0.58rem] text-slate-400">
-                    {{ bar.label }}
-                  </span>
-                </div>
-              </div>
+              <AttackCategoriesChart
+                v-else
+                :events="latestEvents"
+                :is-enabled="controls.enabledDatasets.threats"
+              />
             </div>
           </article>
         </section>
@@ -169,19 +171,21 @@ const trafficPoints = computed(() => {
             <p class="mb-5 font-mono text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">
               Threat activity over time
             </p>
-            <ThreatChart :points="chartPoints" />
+            <ThreatChart
+              :points="visibleChartPoints"
+              :is-enabled="controls.enabledDatasets.threats"
+            />
           </div>
         </section>
 
         <ActivityFeed />
       </div>
 
-      <button
-        aria-label="Create alert"
-        class="fixed bottom-6 right-6 z-20 grid h-13 w-13 place-items-center rounded-full bg-cyan-400 text-slate-950 shadow-[0_0_2rem_rgba(34,211,238,0.55)] transition hover:scale-105 sm:h-14 sm:w-14"
-      >
-        <Plus class="h-6 w-6" aria-hidden="true" />
-      </button>
+     </div>
+
     </section>
+
+
+    <PauseOverlay v-if="controls.isPaused" />
   </main>
 </template>

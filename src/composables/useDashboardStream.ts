@@ -6,9 +6,12 @@ import {
   threatEventsStream$,
 } from '../services/streaming/dashboardStream'
 import type { Subscription } from 'rxjs'
+import { useDashboardControls } from './useDashboardControls'
 
-const MAX_EVENTS = 8
-const MAX_CHART_POINTS = 24
+
+const MAX_EVENTS = 2_000
+const MAX_CHART_POINTS = 3_000
+const { controls } = useDashboardControls()
 
 export const useDashboardStream = () => {
   const metrics = ref<MetricSnapshot>({
@@ -24,23 +27,29 @@ export const useDashboardStream = () => {
 
   let subscription: Subscription | null = null
 
-  const latestEvents = computed(() => events.value.slice(0, MAX_EVENTS))
+  const latestEvents = computed(() => events.value)
 
   onMounted(() => {
     subscription = metricsStream$.subscribe((nextMetrics) => {
+      if (controls.isPaused) return
+
       metrics.value = nextMetrics
       isLoading.value = false
     })
 
     subscription.add(
       threatEventsStream$.subscribe((event) => {
-        events.value = [event, ...events.value].slice(0, MAX_EVENTS)
+      if (controls.isPaused) return
+
+      events.value = [event, ...events.value].slice(0, MAX_EVENTS)
       }),
     )
 
     subscription.add(
       chartPointsStream$.subscribe((point) => {
-        chartPoints.value = [...chartPoints.value, point].slice(-MAX_CHART_POINTS)
+      if (controls.isPaused) return
+
+      chartPoints.value = [...chartPoints.value, point].slice(-MAX_CHART_POINTS)
       }),
     )
   })
