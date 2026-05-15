@@ -1,4 +1,4 @@
-import { interval, map, shareReplay } from 'rxjs'
+import { interval, map, shareReplay, throttleTime } from 'rxjs'
 import {
   generateChartPoint,
   generateMetricSnapshot,
@@ -33,7 +33,8 @@ export const threatEventsStream$ = interval(1800).pipe(
   shareReplay({ bufferSize: 1, refCount: true }),
 )
 
-export const chartPointsStream$ = interval(1200).pipe(
+export const chartPointsStream$ = interval(700).pipe(
   map(() => generateChartPoint()),
+  throttleTime(1000),
   shareReplay({ bufferSize: 1, refCount: true }),
 )
