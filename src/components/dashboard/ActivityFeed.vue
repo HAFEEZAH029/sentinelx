@@ -69,9 +69,12 @@ const statusClasses: Record<string, string> = {
       </div>
     </div>
 
-    <div class="hidden overflow-x-auto md:block">
+    <div
+      v-if="feedItems.length > 0"
+      class="hidden max-h-96 overflow-auto md:block"
+    >
       <table class="w-full min-w-176 text-left">
-        <thead class="font-mono text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">
+        <thead class="sticky top-0 z-10 bg-[#0b1717] font-mono text-[0.62rem] uppercase tracking-[0.18em] text-slate-400">
           <tr>
             <th class="px-6 py-4">Timestamp</th>
             <th class="px-6 py-4">Severity</th>
@@ -103,7 +106,10 @@ const statusClasses: Record<string, string> = {
       </table>
     </div>
 
-    <div class="divide-y divide-cyan-200/5 md:hidden">
+    <div
+      v-if="feedItems.length > 0"
+      class="max-h-[32rem] divide-y divide-cyan-200/5 overflow-y-auto md:hidden"
+    >
       <article
         v-for="item in feedItems"
         :key="`${item.id}-mobile`"
@@ -131,7 +137,7 @@ const statusClasses: Record<string, string> = {
 
     <div
       v-if="feedItems.length === 0"
-        class="grid min-h-44 place-items-center px-6 py-10 text-center"
+      class="grid min-h-44 place-items-center px-6 py-10 text-center"
     >
       <div>
         <p class="font-mono text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
@@ -142,8 +148,5 @@ const statusClasses: Record<string, string> = {
         </p>
       </div>
     </div>
-    <div v-if="feedItems.length > 0" class="hidden overflow-x-auto md:block"></div>
-    <div v-if="feedItems.length > 0" class="divide-y divide-cyan-200/5 md:hidden"></div>
-
   </section>
 </template>

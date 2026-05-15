@@ -17,6 +17,9 @@ import { getTimeRangeStart } from './utils/timeRange'
 import { computed } from 'vue'
 import LoadingSkeleton from './components/feedback/LoadingSkeleton.vue'
 import ConnectionOverlay from './components/feedback/ConnectionOverlay.vue'
+import DisconnectedBanner from './components/feedback/DisconnectedBanner.vue'
+import MalformedDataBanner from './components/feedback/MalformedDataBanner.vue'
+import { useConnectionSimulation } from './composables/useConnectionSimulation'
 
 
 
@@ -32,25 +35,8 @@ const { controls } = useDashboardControls()
 
 const chartSlots = ['Network Traffic Volume', 'Attack Categories']
 
-/**const attackBars = computed(() => {
-  const counts = attackTypes.map((type) => {
-    const count = latestEvents.value.filter((event) => event.attackType === type).length
 
-    return {
-      label: type === 'SQL Injection' ? 'SQLi' : type === 'Brute Force' ? 'Brute' : type,
-      count,
-    }
-  })
-
-  const maxCount = Math.max(...counts.map((item) => item.count), 1)
-
-  return counts.map((item) => ({
-    ...item,
-    height: `${Math.max((item.count / maxCount) * 100, 8)}%`,
-  }))
-}) **/
-
-const { chartPoints, latestEvents, isLoading } = useDashboardStream()
+const { chartPoints, latestEvents, isLoading, malformedCount, hasMalformedData } = useDashboardStream()
 
 const visibleChartPoints = computed(() => {
   const rangeStart = getTimeRangeStart(controls.timeRange)
@@ -58,62 +44,24 @@ const visibleChartPoints = computed(() => {
   return chartPoints.value.filter((point) => point.timestamp >= rangeStart)
 })
 
-/**const threatPoints = computed(() => {
-  if (!chartPoints.value.length) {
-    return '0,95 78,82 150,90 232,52 314,70 392,28 468,48 540,18'
-  }
-
-  const width = 540
-  const height = 120
-  const maxThreats = Math.max(...chartPoints.value.map((point) => point.threats), 1)
-
-  return chartPoints.value
-    .map((point, index) => {
-      const x =
-        chartPoints.value.length === 1
-          ? 0
-          : (index / (chartPoints.value.length - 1)) * width
-
-      const y = height - (point.threats / maxThreats) * height
-
-      return `${x},${y}`
-    })
-    .join(' ')
-}) **/
-
-/**const trafficPoints = computed(() => {
-  if (!chartPoints.value.length) {
-    return '0,155 72,112 132,82 192,104 252,48 320,76 382,18 446,40 520,0'
-  }
-
-  const width = 520
-  const height = 170
-  const maxTraffic = Math.max(...chartPoints.value.map((point) => point.traffic), 1)
-
-  return chartPoints.value
-    .map((point, index) => {
-      const x =
-        chartPoints.value.length === 1
-          ? 0
-          : (index / (chartPoints.value.length - 1)) * width
-
-      const y = height - (point.traffic / maxTraffic) * height
-
-      return `${x},${y}`
-    })
-    .join(' ')
-}) **/
-
+useConnectionSimulation()
 
 </script>
 
 <template>
   <ConnectionOverlay v-if="controls.connectionStatus === 'reconnecting'" />
-  <main class="min-h-screen overflow-hidden bg-[#d9d9d9] text-cyan-50">
+  <main class="min-h-screen overflow-hidden bg-[#d9d9d9] text-cyan-50 transition-colors duration-300" :class="controls.theme === 'light' ? 'theme-light bg-slate-100' : 'bg-[#d9d9d9]'">
     <section
-      class="mx-auto min-h-screen w-full max-w-464 overflow-hidden border border-cyan-200/10 bg-[#071111]/95 shadow-2xl shadow-black/50 ring-1 ring-white/3"
+      class="mx-auto min-h-screen w-full max-w-464 overflow-hidden border border-cyan-200/10 bg-[#071111]/95 shadow-2xl shadow-black/50 ring-1 ring-white/3 transition-colors duration-300"
+      :class="
+        controls.theme === 'light'
+        ? 'border-slate-200 bg-slate-50 text-slate-950 shadow-slate-300/40 ring-slate-200'
+        : 'border-cyan-200/10 bg-[#071111]/95 text-cyan-50 shadow-black/50 ring-white/3'
+     "
     >
       <DashboardHeader />
+
+      <DisconnectedBanner v-if="controls.connectionStatus === 'disconnected'" />
 
       <div v-if="isLoading" class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
         <LoadingSkeleton />
@@ -124,7 +72,17 @@ const visibleChartPoints = computed(() => {
       class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10"
      >
 
-      <div class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10">
+      <div class="px-4 pb-6 sm:px-6 sm:pb-8 lg:px-8 lg:pb-10"
+      :class="controls.connectionStatus === 'disconnected' ? 'pointer-events-none opacity-45 blur-[1px]' : ''"
+      >
+
+        <MalformedDataBanner
+          v-if="hasMalformedData"
+          :count="malformedCount"
+          class="mb-5"
+          @dismiss="hasMalformedData = false"
+        />
+
         <MetricsGrid />
 
         <section class="mt-5 grid gap-5 lg:grid-cols-2">
@@ -181,6 +139,13 @@ const visibleChartPoints = computed(() => {
         <ActivityFeed />
       </div>
 
+     </div>
+
+     <div
+        v-if="controls.connectionStatus === 'disconnected'"
+        class="fixed bottom-6 right-6 z-40 rounded-lg border border-slate-500/20 bg-slate-800/90 px-4 py-3 font-mono text-xs font-bold uppercase tracking-[0.14em] text-slate-200 shadow-xl"
+     >
+        Last synchronized: {{ new Date().toLocaleTimeString() }}
      </div>
 
     </section>

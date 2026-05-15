@@ -25,6 +25,7 @@ export interface DashboardControls {
   enabledDatasets: Record<ControlDatasetKey, boolean>
   showTooltips: boolean
   isPaused: boolean
+  theme: 'dark' | 'light'
 }
 
 export type ConnectionStatus =
